@@ -8,14 +8,20 @@ import {
 } from "react-grid-dnd";
 import "./App.css";
 
-function App(props) {
-	  const [items, setItems] = React.useState({
-		      iFixitDevices: props.iFixitDevices,
-		      grabBag: props.grabBag 
-		    });
+class Collection extends React.Component{
 
+	handleSubmit(text){
+		return event => {
+			event.preventDefault()
+			console.log(text);
+		}
+	}
+	
+	render(){
 	  return (
-		      <GridContextProvider onChange={props.onChange}>
+		  <div>
+		      <Search handleSubmit={this.handleSubmit}/>
+		      <GridContextProvider onChange={this.props.onChange}>
 		        <div className="container">
 		          <GridDropZone
 		            className="dropzone iFixitDevices"
@@ -23,12 +29,10 @@ function App(props) {
 		            boxesPerRow={4}
 		            rowHeight={70}
 		          >
-		            {items.iFixitDevices.map(item => (
+		            {this.props.iFixitDevices.map(item => (
 				                <GridItem key={item.name}>
 				                  <div className="grid-item">
-				                    <div className="grid-item-content">
-				                      {item.name[0].toUpperCase()}
-				                    </div>
+				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_name}/>
 				                  </div>
 				                </GridItem>
 				              ))}
@@ -39,18 +43,44 @@ function App(props) {
 		            boxesPerRow={4}
 		            rowHeight={70}
 		          >
-		            {items.grabBag.map(item => (
+		            {this.props.grabBag.map(item => (
 				                <GridItem key={item.name}>
 				                  <div className="grid-item">
-				                    <div className="grid-item-content">
-				                      {item.name[0].toUpperCase()}
-				                    </div>
-				                  </div>
+				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_name}/>
+				    		   </div>
 				                </GridItem>
 				              ))}
 		          </GridDropZone>
 		        </div>
 		      </GridContextProvider>
-		    );
+		  </div>
+		  );
+	}
 }
-export default App;
+
+class Search extends React.Component{
+	constructor(props){
+		super(props);
+		this.state = {searchString : ''};
+
+		this.handleChange = this.handleChange.bind(this);
+	}
+
+	handleChange(event){
+		this.setState({searchString : event.target.value});
+	}
+
+	render(){
+		return(	
+		<form onSubmit={this.props.handleSubmit(this.state.searchString)}>
+			<label>
+		  	Name:
+	  		<input type="text" value={this.state.searchString} onChange={this.handleChange} />
+			</label>
+			<input type="submit" value="Submit" />
+	      	</form>
+		);
+	}
+
+}
+export default Collection;

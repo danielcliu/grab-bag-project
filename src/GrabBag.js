@@ -1,39 +1,38 @@
 import React from 'react';
-import App from './App';
+import Collection from './App';
 import {
 	  swap,
 	  move
 } from "react-grid-dnd";
+import iFixitApi from './iFixitApi'
 
 class GrabBag extends React.Component{
 	constructor(props) {
     		super(props);
     		this.state = {
 			count: 0,
-			iFixitDevices: [
-				    { id: 1, name: "ben" },
-				    { id: 2, name: "joe" },
-				    { id: 3, name: "jason" },
-				    { id: 4, name: "chris" },
-				    { id: 5, name: "heather" },
-				    { id: 6, name: "Richard" }
-				  ],
-			grabBag: [
-				    { id: 7, name: "george" },
-				    { id: 8, name: "rupert" },
-				    { id: 9, name: "alice" },
-				    { id: 10, name: "katherine" },
-				    { id: 11, name: "pam" },
-				    { id: 12, name: "katie" }
-				  ]
+			iFixitDevices: [],
+			grabBag: []
 
 		};
 		this.onChange = this.onChange.bind(this);
  	 }
+	 
+
+	async componentDidMount(){
+		const devices = await this.getDeviceList('5', '5');
+		this.setState({iFixitDevices: devices})
+	}
+
+	async getDeviceList(page, limit){
+		return iFixitApi.get(`wikis/CATEGORY?limit=${limit}&offset=${page}`).then(response => {
+			return Array.from(response.data, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard}}); 
+		});
+	
+	}
 
 	 onChange(sourceId, sourceIndex, targetIndex, targetId) {
 		console.log(sourceId, ' ', sourceIndex , ' ', targetIndex, ' ', targetId);
-		console.log(this.state);
 		if (targetId) {
 			if (targetId !== "iFixitDevices" && this.state[targetId].indexOf(this.state[sourceId][sourceIndex]) === -1){
 				const result = move(
@@ -54,6 +53,7 @@ class GrabBag extends React.Component{
 		}
 		else{
 			const result = swap(this.state[sourceId], sourceIndex, targetIndex);
+			console.log(result)
 			return this.setState({
 			    [sourceId]: result
 			  });
@@ -64,7 +64,7 @@ class GrabBag extends React.Component{
 		console.log(this.state);
 		return (
 			<div>
-				<App 
+				<Collection 
 					iFixitDevices={this.state.iFixitDevices} 
 					grabBag={this.state.grabBag}
 					onChange={this.onChange}
