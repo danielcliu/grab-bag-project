@@ -9,28 +9,27 @@ import {
 import "./App.css";
 
 class Collection extends React.Component{
-
-	handleSubmit(text){
-		return event => {
-			event.preventDefault()
-			console.log(text);
-		}
-	}
 	
+	imageClick(item) {
+		this.props.selectGBDevice(item);
+	}
+
 	render(){
+	  console.log("P{RPS: ", this.props);
+	  console.log(this.props.iFixitBag);
 	  return (
 		  <div>
-		      <Search handleSubmit={this.handleSubmit}/>
+		      <Search handleSubmit={this.props.handleSubmit}/>
 		      <GridContextProvider onChange={this.props.onChange}>
 		        <div className="container">
 		          <GridDropZone
-		            className="dropzone iFixitDevices"
-		            id="iFixitDevices"
+		            className="dropzone iFixitBag"
+		            id="iFixitBag"
 		            boxesPerRow={4}
 		            rowHeight={70}
 		          >
-		            {this.props.iFixitDevices.map(item => (
-				                <GridItem key={item.name}>
+		            {this.props.iFixitBag.map(item => (
+				                <GridItem key={item.id}>
 				                  <div className="grid-item">
 				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_name}/>
 				                  </div>
@@ -44,14 +43,22 @@ class Collection extends React.Component{
 		            rowHeight={70}
 		          >
 		            {this.props.grabBag.map(item => (
-				                <GridItem key={item.name}>
+				                <GridItem key={item.id}>
 				                  <div className="grid-item">
-				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_name}/>
+				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_title} onDoubleClick={() => this.imageClick(item)}/>
 				    		   </div>
 				                </GridItem>
 				              ))}
 		          </GridDropZone>
-		        </div>
+		  	</div>
+		          <GridDropZone
+		            className="dropzone trash"
+		            id="trash"
+		            boxesPerRow={1}
+		            rowHeight={4}
+		          >
+		  		<div> Trash </div>
+		  	  </GridDropZone>
 		      </GridContextProvider>
 		  </div>
 		  );
@@ -64,15 +71,20 @@ class Search extends React.Component{
 		this.state = {searchString : ''};
 
 		this.handleChange = this.handleChange.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	handleChange(event){
 		this.setState({searchString : event.target.value});
 	}
-
+	handleSubmit(event){
+		event.preventDefault();
+		console.log("here");
+		this.props.handleSubmit(this.state.searchString);
+	}
 	render(){
 		return(	
-		<form onSubmit={this.props.handleSubmit(this.state.searchString)}>
+		<form onSubmit={this.handleSubmit}>
 			<label>
 		  	Name:
 	  		<input type="text" value={this.state.searchString} onChange={this.handleChange} />
