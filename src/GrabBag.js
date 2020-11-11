@@ -9,10 +9,11 @@ import iFixitApi from './iFixitApi'
 class GrabBag extends React.Component{
 	constructor(props) {
     		super(props);
+		const grabBagSavedDevices = JSON.parse(sessionStorage.getItem('grabBagDevices')) || [[]];
     		this.state = {
 			limit: '20',
 			iFixitBag:{'devices': [], 'page': 0, 'selected': {'display_title': '', 'url': ''}},
-			grabBag: {'devices': [[]], 'page': 0, 'selected': {'display_title': '', 'url': ''}},
+			grabBag: {'devices': grabBagSavedDevices, 'page': 0, 'selected': {'display_title': '', 'url': ''}},
 			trash:{'devices': [], 'page': 0 },
 		};
 		this.onChange = this.onChange.bind(this);
@@ -26,6 +27,22 @@ class GrabBag extends React.Component{
 			prevState.iFixitBag.devices = devices;
 			return  { iFixitBag: prevState.iFixitBag}
 		})
+		window.addEventListener(
+		      "beforeunload",
+		      this.saveGrabBag.bind(this)
+		    );
+	}
+	
+	componentWillUnmount(){
+		window.removeEventListener(
+		      "beforeunload",
+		      this.saveGrabBag.bind(this)
+		    );
+		this.saveGrabBag();
+	}
+
+	saveGrabBag(){
+		sessionStorage.setItem('grabBagDevices', JSON.stringify(this.state.grabBag.devices));
 	}
 
 	async getDeviceList(page, limit){
@@ -54,6 +71,11 @@ class GrabBag extends React.Component{
 		});
 	}
 
+	handleIdCheck(val){
+		const allGBDevices = this.state.grabBag.devices;
+		return allGBDevices.flat().some(device => val.id === device.id);
+	}
+
 	onChange(sourceId, sourceIndex, targetIndex, targetId) {
 		console.log("the: ", this.state)
 		console.log(sourceId, ' ', sourceIndex , ' ', targetIndex, ' ', targetId);
@@ -61,7 +83,7 @@ class GrabBag extends React.Component{
 		const targetBag = this.state[targetId];
 		let targetDevices = this.state[targetId];
 		if (targetId){
-			if (targetId === "grabBag" && targetBag.devices[targetBag.page].indexOf(sourceBag.devices[sourceIndex]) === -1){
+			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceIndex])){
 				const result = move(
 				    sourceBag.devices,
 				    targetBag.devices[targetBag.page],
