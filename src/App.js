@@ -6,8 +6,21 @@ import {
 	  swap,
 	  move
 } from "react-grid-dnd";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import "./App.css";
 
+		  	    /*<div>
+		  		<button>
+		  			<FiChevronLeft />
+		  		</button>
+		  		<span>
+		  			Page {this.props.grabBag.page}
+		  		</span>
+		  		<button>
+		  			<FiChevronRight/>
+		  	    	</button>
+		  	    </div>
+		  	   */
 class Collection extends React.Component{
 	
 	imageClick(item) {
@@ -16,7 +29,7 @@ class Collection extends React.Component{
 
 	render(){
 	  console.log("P{RPS: ", this.props);
-	  console.log(this.props.iFixitBag);
+	  //console.log(this.props.iFixitBag);
 	  return (
 		  <div>
 		      <Search handleSubmit={this.props.handleSubmit}/>
@@ -28,7 +41,7 @@ class Collection extends React.Component{
 		            boxesPerRow={4}
 		            rowHeight={70}
 		          >
-		            {this.props.iFixitBag.map(item => (
+		            {this.props.iFixitBag.devices.map(item => (
 				                <GridItem key={item.id}>
 				                  <div className="grid-item">
 				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_name}/>
@@ -42,7 +55,7 @@ class Collection extends React.Component{
 		            boxesPerRow={4}
 		            rowHeight={70}
 		          >
-		            {this.props.grabBag.map(item => (
+		            {this.props.grabBag.devices[this.props.grabBag.page].map(item => (
 				                <GridItem key={item.id}>
 				                  <div className="grid-item">
 				                    <img className="grid-item-content grid-item-image" src={item.image} alt={item.display_title} onDoubleClick={() => this.imageClick(item)}/>

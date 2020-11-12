@@ -11,9 +11,11 @@ class GrabBag extends React.Component{
     		super(props);
 		const grabBagSavedDevices = JSON.parse(sessionStorage.getItem('grabBagDevices')) || [[]];
     		this.state = {
-			limit: '20',
+			limit: 4,
+			
 			iFixitBag:{'devices': [], 'page': 0, 'selected': {'display_title': '', 'url': ''}},
 			grabBag: {'devices': grabBagSavedDevices, 'page': 0, 'selected': {'display_title': '', 'url': ''}},
+			grabBagDevices: grabBagSavedDevices,
 			trash:{'devices': [], 'page': 0 },
 		};
 		this.onChange = this.onChange.bind(this);
@@ -76,13 +78,35 @@ class GrabBag extends React.Component{
 		return allGBDevices.flat().some(device => val.id === device.id);
 	}
 
+	redistributeGBDevices(stateDevices){
+		console.log("state Devices: ", stateDevices);
+		const deepCopy = stateDevices;
+		let newDevices = []
+		let flatCopy = deepCopy.flat();
+		console.log("howdy ", flatCopy);
+		let flatLen = flatCopy.length;
+		console.log("howdy ", flatLen);
+		for (let i = 0; i < flatLen; i += this.state.limit){
+			let itemList = [];
+			console.log("limit: ", this.state.limit, " i: ", i);
+			for (let j = 0; j < this.state.limit; j++){
+				console.log("in inner loop");
+				if(j+i == flatLen){break;}
+				console.log("about to push loop", );
+				itemList.push(flatCopy[i+j]);
+			
+			} 
+			console.log("IN LOOP x: ", i, ' ', itemList);
+			newDevices.push(itemList);
+		}
+		console.log("NEW DEVICES: ", newDevices);
+		return newDevices;
+	}
+
 	onChange(sourceId, sourceIndex, targetIndex, targetId) {
-		console.log("the: ", this.state)
-		console.log(sourceId, ' ', sourceIndex , ' ', targetIndex, ' ', targetId);
 		const sourceBag = this.state[sourceId];
-		const targetBag = this.state[targetId];
-		let targetDevices = this.state[targetId];
 		if (targetId){
+			const targetBag = this.state[targetId];
 			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceIndex])){
 				const result = move(
 				    sourceBag.devices,
@@ -92,8 +116,12 @@ class GrabBag extends React.Component{
 				  );
 
 				return this.setState(prevState => {
-					prevState[targetId].devices[prevState[targetId].page] = result[1];
-					return {[targetId]: prevState[targetId]}
+					let localState = prevState;
+					prevState.grabBagDevices[prevState[targetId].page] = result[1];
+					let newDevices = this.redistributeGBDevices(prevState.grabBagDevices);
+
+					localState[targetId].devices = newDevices;
+					return {'grabBagDevices': newDevices}
 			  	});
 		    	}
 			else if (targetId === "trash" && sourceId === "grabBag"){
@@ -103,10 +131,14 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-
 				return this.setState(prevState => {
-					prevState[sourceId].devices[prevState[sourceId].page] = result[0];
-					return {[targetId]: prevState[sourceId]}
+					let localState = prevState;
+					prevState.grabBagDevices[prevState[sourceId].page] = result[0];
+					
+					let newDevices = this.redistributeGBDevices(prevState.grabBagDevices);
+
+					localState[sourceId].devices = newDevices;
+					return {[sourceId]: localState[sourceId], 'grabBagDevices': newDevices}
 			  	});
 
 			} 
@@ -117,8 +149,10 @@ class GrabBag extends React.Component{
 				sourceDevices = sourceBag.devices[sourceBag.page];
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
 				return this.setState(prevState => {
+					console.log(prevState);
 					prevState[sourceId].devices[prevState[sourceId].page] = result;
-					return {[sourceId]: prevState[sourceId]}
+					prevState.grabBagDevices[prevState[sourceId].page] = result;
+					return {[sourceId]: prevState[sourceId], 'grabBagDevices': prevState.grabBagDevices}
 			  	});
 			}
 			else{
@@ -133,12 +167,13 @@ class GrabBag extends React.Component{
 	    }
 
 	render(){
-		console.log(this.state);
+		console.log("Render GrabBag: ",this.state);
 		return (
 			<div>
 				<Collection 
-					iFixitBag={this.state.iFixitBag.devices} 
-					grabBag={this.state.grabBag.devices[this.state.grabBag.page]}
+					iFixitBag={this.state.iFixitBag} 
+					grabBag={this.state.grabBag}
+					grabBagDevices={this.state.grabBagDevices}
 					onChange={this.onChange}
 					handleSubmit={this.handleSubmit}
 					selectGBDevice={this.selectGBDevice}
