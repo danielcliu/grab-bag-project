@@ -5,6 +5,10 @@
   margin: 1rem auto;
 }
 
+.device-bag{
+	width: 400px;
+}
+
 .dropzone {
   flex: 1;
   height: 400px;
@@ -46,8 +50,18 @@
 	-ms-user-select: none;
 }
 
-.tooltip {
-  overflow-y: scroll;
-  overflow-x: hidden;
+.pager {
+	text-align: center;
 }
 
+.drop-trash {
+  flex: 1;
+  height: 40px;
+  width: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+}
+
+.fa-trash:hover {
+    color: red;
+}
