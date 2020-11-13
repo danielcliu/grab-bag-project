@@ -10,26 +10,10 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import {FaTrash, FaTrashRestore} from "react-icons/fa";
 import "./App.css";
 import Bag from "./Bag.js";
-	/*
 
-					  <GridDropZone
-					    className="drop-trash trash"
-					    id="trash"
-					    boxesPerRow={1}
-					    rowHeight={4}
-					  >
-						<FaTrash className="fa-trash" />
-					  </GridDropZone>
-	*/
 class Collection extends React.Component{
 	
-	constructor(props){
-		super(props);
-
-	}
-
 	render(){
-	  console.log("P{RPS: ", this.props);
 	  return (
 		  <div>
 		      <GridContextProvider onChange={this.props.onChange}>

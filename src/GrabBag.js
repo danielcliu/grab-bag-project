@@ -1,5 +1,5 @@
 import React from 'react';
-import Collection from './App';
+import Collection from './Collection';
 import {
 	  swap,
 	  move
@@ -75,11 +75,9 @@ class GrabBag extends React.Component{
 		const devices = await iFixitApi.get(`search/${text}?filter=category&limit=${this.state.limit}&offset=${0}`).then(response => {
 			return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
-		console.log(devices);
 		localState.devices = devices;
 		localState.page = 0;
 	 	this.setState({iFixitBag: localState, searchString: text});	
-		console.log(text);
 	}
 	
 	selectGBDevice(item){
@@ -147,16 +145,15 @@ class GrabBag extends React.Component{
 				return 0;
 			}
 			localState.devices = devices;
-			console.log(devices);
 			this.setState({iFixitBag: localState});	
 		}	
 	
 	}
 
 	onChange(sourceId, sourceIndex, targetIndex, targetId) {
-		console.log("ON CHANGE: ", sourceId, ' ', sourceIndex, ' ', targetIndex, ' ', targetId);
 		const sourceBag = this.state[sourceId];
 		if( !targetId && !sourceId) return 0;
+		
 		if (targetId){
 			const targetBag = this.state[targetId];
 			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceIndex])){
@@ -211,7 +208,6 @@ class GrabBag extends React.Component{
 				sourceDevices = sourceBag.devices[sourceBag.page];
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
 				return this.setState(prevState => {
-					console.log(prevState);
 					prevState[sourceId].devices[prevState[sourceId].page] = result;
 					if (result.length === 0){
 						
@@ -235,7 +231,6 @@ class GrabBag extends React.Component{
 		return (
 			<div>
 				<div className="header">
-					
 					<div className="search">
 						<label>
 							<a href="https://www.ifixit.com/"><img className="logo-image" src="https://upload.wikimedia.org/wikipedia/commons/8/8e/IFixit_logo.svg"/></a>
