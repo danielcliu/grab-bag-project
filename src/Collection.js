@@ -10,7 +10,7 @@ import {FaTrash}  from "react-icons/fa";
 class Collection extends React.Component{
 	
 	render(){
-	  return (
+	 return (
 		  <div>
 		      <GridContextProvider onChange={this.props.onChange}>
 		        <div className="container">

@@ -58,7 +58,7 @@ class GrabBag extends React.Component{
 		this.setState(prevState => {
 			prevState.iFixitBag.devices = devices;
 			prevState.iFixitBag.page=0;
-			return  { iFixitBag: prevState.iFixitBag}
+			return  { iFixitBag: prevState.iFixitBag, searchString: ''}
 		})
 	}
 
@@ -123,9 +123,12 @@ class GrabBag extends React.Component{
 
 	async changeIFIPage(diff){
 		let localState = this.state.iFixitBag;
-		localState.page += diff;
-		const offset = localState.page * this.state.limit;
-		if (localState.page < 0){return 0;} 
+		let page = localState.page + diff;
+		if (page < 0){
+			cogoToast.error('Invalid Request');
+			return 0;
+		} 
+		const offset = page * this.state.limit;
 		if(this.state.searchString === ''){
 			const devices = await this.getDeviceList(offset, this.state.limit);
 			if(devices.length === 0){
@@ -133,6 +136,7 @@ class GrabBag extends React.Component{
 				return 0;
 			}
 			localState.devices = devices
+			localState.page = page;
 			this.setState({ iFixitBag: localState})
 		}
 		else{
@@ -144,6 +148,7 @@ class GrabBag extends React.Component{
 				return 0;
 			}
 			localState.devices = devices;
+			localState.page = page;
 			this.setState({iFixitBag: localState});	
 		}	
 	
