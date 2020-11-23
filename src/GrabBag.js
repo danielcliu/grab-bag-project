@@ -19,7 +19,6 @@ class GrabBag extends React.Component{
 			searchString: '',	
 			iFixitBag:{'devices': [], 'page': 0, 'selected': {'display_title': '', 'url': ''}},
 			grabBag: {'devices': grabBagSavedDevices, 'page': 0, 'selected': {'display_title': '', 'url': ''}},
-			grabBagDevices: grabBagSavedDevices,
 			trash:{'devices': [], 'page': 0 },
 		};
 		this.onChange = this.onChange.bind(this);
@@ -71,7 +70,7 @@ class GrabBag extends React.Component{
 	}
 	
 	async handleSearch(text){
-		let localState = _.cloneDeep(this.state.iFixitBag);
+		let localState = this.state.iFixitBag;
 		const devices = await iFixitApi.get(`search/${text}?filter=category&limit=${this.state.limit}&offset=${0}`).then(response => {
 			return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
@@ -95,7 +94,8 @@ class GrabBag extends React.Component{
 	}
 
 	redistributeGBDevices(stateDevices){
-		const deepCopy = _.cloneDeep(stateDevices);
+		const deepCopy = stateDevices;
+		
 		let newDevices = []
 		let flatCopy = deepCopy.flat();
 		let flatLen = flatCopy.length;
@@ -123,7 +123,7 @@ class GrabBag extends React.Component{
 	}
 
 	async changeIFIPage(diff){
-		let localState = _.cloneDeep(this.state.iFixitBag);
+		let localState = this.state.iFixitBag;
 		localState.page += diff;
 		const offset = localState.page * this.state.limit;
 		if (localState.page < 0){return 0;} 
@@ -163,15 +163,11 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-
-				return this.setState(prevState => {
-					let localState = prevState;
-					prevState.grabBagDevices[prevState[targetId].page] = result[1];
-					let newDevices = this.redistributeGBDevices(prevState.grabBagDevices);
-
-					localState[targetId].devices = newDevices;
-					return {'grabBagDevices': newDevices}
-			  	});
+				let deepCopy = this.state.[targetId];
+				deepCopy.devices[deepCopy.page] = result[1];
+				let newDevices = this.redistributeGBDevices(deepCopy.devices);
+				deepCopy.devices = newDevices;
+				return this.setState({[targetId]: deepCopy});
 		    	}
 			else if (targetId === "trash" && sourceId === "grabBag"){
 				const result = move(
@@ -180,7 +176,7 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-				const deepCopy = _.cloneDeep(this.state[sourceId]);
+				const deepCopy = this.state[sourceId];
 
 				deepCopy.devices[deepCopy.page] = result[0];
 					
@@ -190,12 +186,7 @@ class GrabBag extends React.Component{
 					deepCopy.page -=  1;
 				}
 				deepCopy.devices = newDevices;
-				return this.setState(prevState => {
-					prevState.grabBagDevices[prevState[sourceId].page] = result[0];
-					
-					let newDevices = this.redistributeGBDevices(prevState.grabBagDevices);
-					return {[sourceId]: deepCopy, 'grabBagDevices': newDevices}
-			  	});
+				return this.setState({[sourceId]: deepCopy});
 
 			}
 			else if (targetId === "trash"){
@@ -207,14 +198,9 @@ class GrabBag extends React.Component{
 			if (sourceId === "grabBag" ) {
 				sourceDevices = sourceBag.devices[sourceBag.page];
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
-				return this.setState(prevState => {
-					prevState[sourceId].devices[prevState[sourceId].page] = result;
-					if (result.length === 0){
-						
-					}
-					prevState.grabBagDevices[prevState[sourceId].page] = result;
-					return {[sourceId]: prevState[sourceId], 'grabBagDevices': prevState.grabBagDevices}
-			  	});
+				let deepCopy = this.state[sourceId];
+				deepCopy.devices[deepCopy.page] = result;
+				return this.setState({[sourceId]: deepCopy});
 			}
 			else{
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
@@ -242,7 +228,6 @@ class GrabBag extends React.Component{
 				<Collection 
 					iFixitBag={this.state.iFixitBag} 
 					grabBag={this.state.grabBag}
-					grabBagDevices={this.state.grabBagDevices}
 					onChange={this.onChange}
 					handleSubmit={this.handleSearch}
 					changeGBPage={this.changeGBPage}
