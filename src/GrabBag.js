@@ -6,7 +6,6 @@ import {
 } from "react-grid-dnd";
 import iFixitApi from './iFixitApi';
 import Search from './Search';
-import _ from "lodash";
 import "./App.css";
 import cogoToast from 'cogo-toast';
 
@@ -181,7 +180,6 @@ class GrabBag extends React.Component{
 				deepCopy.devices[deepCopy.page] = result[0];
 					
 				let newDevices = this.redistributeGBDevices(deepCopy.devices);
-				let page;
 				if (Math.max(newDevices.length-1, 0) < deepCopy.page){
 					deepCopy.page -=  1;
 				}
@@ -219,7 +217,7 @@ class GrabBag extends React.Component{
 				<div className="header">
 					<div className="search">
 						<label>
-							<a href="https://www.ifixit.com/"><img className="logo-image" src="https://upload.wikimedia.org/wikipedia/commons/8/8e/IFixit_logo.svg"/></a>
+							<a href="https://www.ifixit.com/"><img className="logo-image" src="https://upload.wikimedia.org/wikipedia/commons/8/8e/IFixit_logo.svg" alt="iFixit"/></a>
 						</label>
 		      				<Search className="pager" handleSubmit={this.handleSearch}/>
 						<button className="random-button" onClick={this.getRandomDevices}>All Devices</button> 
@@ -239,7 +237,7 @@ class GrabBag extends React.Component{
 					{this.state.grabBag.selected.url &&
 					<div className="inner-selected">
 						<div className="pager">iFixit Link: </div>
-						<a className="pager" href={this.state.grabBag.selected.url} target="_blank" > Here</a>
+						<a className="pager" href={this.state.grabBag.selected.url} target="_blank" rel="noreferrer"> Here</a>
 					</div>
 					}
 				</div>

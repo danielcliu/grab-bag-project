@@ -2,14 +2,10 @@ import React from "react";
 import {
 	  GridContextProvider,
 	  GridDropZone,
-	  GridItem,
-	  swap,
-	  move
 } from "react-grid-dnd";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import {FaTrash, FaTrashRestore} from "react-icons/fa";
 import "./App.css";
 import Bag from "./Bag.js";
+import {FaTrash}  from "react-icons/fa";
 
 class Collection extends React.Component{
 	
