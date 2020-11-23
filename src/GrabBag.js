@@ -125,7 +125,7 @@ class GrabBag extends React.Component{
 		let localState = this.state.iFixitBag;
 		let page = localState.page + diff;
 		if (page < 0){
-			cogoToast.error('Invalid Request');
+			cogoToast.error('There is not a page 0');
 			return 0;
 		} 
 		const offset = page * this.state.limit;
