@@ -129,28 +129,24 @@ class GrabBag extends React.Component{
 			return 0;
 		} 
 		const offset = page * this.state.limit;
+		let devices;
 		if(this.state.searchString === ''){
-			const devices = await this.getDeviceList(offset, this.state.limit);
-			if(devices.length === 0){
-				cogoToast.error(`There are no more results for ${this.state.searchString}`);
-				return 0;
-			}
-			localState.devices = devices
-			localState.page = page;
-			this.setState({ iFixitBag: localState})
+			devices = await this.getDeviceList(offset, this.state.limit);
 		}
 		else{
-			const devices = await iFixitApi.get(`search/${this.state.searchString}?filter=category&limit=${this.state.limit}&offset=${offset}`).then(response => {
+			devices = await iFixitApi.get(`search/${this.state.searchString}?filter=category&limit=${this.state.limit}&offset=${offset}`).then(response => {
 				return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
-			if(devices.length === 0){
-				cogoToast.error(`There are no more results for ${this.state.searchString}`);
-				return 0;
-			}
-			localState.devices = devices;
-			localState.page = page;
-			this.setState({iFixitBag: localState});	
 		}	
+		
+		if(devices.length === 0){
+			cogoToast.error(`There are no more results for ${this.state.searchString}`);
+			return 0;
+		}
+
+		localState.devices = devices;
+		localState.page = page;
+		this.setState({iFixitBag: localState});	
 	
 	}
 
@@ -197,21 +193,20 @@ class GrabBag extends React.Component{
 			}
 		}
 		else{
-			let sourceDevices = sourceBag.devices;
 			if (sourceId === "grabBag" ) {
-				sourceDevices = sourceBag.devices[sourceBag.page];
+				const sourceDevices = sourceBag.devices[sourceBag.page];
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
 				let deepCopy = this.state[sourceId];
 				deepCopy.devices[deepCopy.page] = result;
 				return this.setState({[sourceId]: deepCopy});
 			}
 			else{
+				const sourceDevices = sourceBag.devices;
 				const result = swap(sourceDevices, sourceIndex, targetIndex);
 				return this.setState(prevState => {
 					prevState[sourceId].devices = result;
 					return {[sourceId]: prevState[sourceId]}
 			  	});
-			
 			}
 		}
 	    }
@@ -249,9 +244,5 @@ class GrabBag extends React.Component{
 			</div>
 		)
 	}
-
-
-
-
 }
 export default GrabBag;
