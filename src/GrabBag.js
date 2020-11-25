@@ -75,7 +75,8 @@ class GrabBag extends React.Component{
 			});
 		localState.devices = devices;
 		localState.page = 0;
-	 	this.setState({iFixitBag: localState, searchString: text});	
+	 	this.setState({iFixitBag: localState, searchString: text});
+		if(devices.length === 0) cogoToast.error(`There were no results for "${text}"`);
 	}
 	
 	selectGBDevice(item){
