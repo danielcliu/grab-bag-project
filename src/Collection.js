@@ -10,6 +10,7 @@ import {FaTrash}  from "react-icons/fa";
 class Collection extends React.Component{
 	
 	render(){
+	console.log(this.props);
 	 return (
 		  <div>
 		      <GridContextProvider onChange={this.props.onChange}>
@@ -17,10 +18,10 @@ class Collection extends React.Component{
 				<div className="inner-container">
 		  			<div className="title">iFixit Devices</div>
 					<Bag bagName="iFixitBag" 
-						bagDevices={this.props.iFixitBag.devices} 
+						bagDevices={this.props.iFixitBag.devices[0]} 
 						bagPage={this.props.iFixitBag.page} 
 						changeBagPage={this.props.changeIFIPage} 
-						selectDevice={this.props.selectGBDevice} />
+						selectDevice={this.props.selectDevice} />
 				</div>
 		  		<div className="inner-container">
 		  			<div className="title">Grab Bag</div>
@@ -28,7 +29,7 @@ class Collection extends React.Component{
 						bagDevices={this.props.grabBag.devices[this.props.grabBag.page]} 
 						bagPage={this.props.grabBag.page} 
 						changeBagPage={this.props.changeGBPage} 
-						selectDevice={this.props.selectGBDevice} />
+						selectDevice={this.props.selectDevice} />
 				</div>
 		  	</div>
 		      </GridContextProvider>

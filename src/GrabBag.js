@@ -15,21 +15,22 @@ class GrabBag extends React.Component{
 		const grabBagSavedDevices = JSON.parse(sessionStorage.getItem('grabBagDevices')) || [[]];
     		this.state = {
 			limit: 24,
-			searchString: '',	
-			iFixitBag:{'devices': [], 'page': 0, 'selected': {'display_title': '', 'url': ''}},
-			grabBag: {'devices': grabBagSavedDevices, 'page': 0, 'selected': {'display_title': '', 'url': ''}},
+			searchString: '',
+			selectedItem: {'display_title': '', 'url': ''},
+			iFixitBag:{'devices': [[]], 'page': 0, 'offset': 0 },
+			grabBag: {'devices': grabBagSavedDevices, 'page': 0 },
 			trash:{'devices': [], 'page': 0 },
 		};
 		this.onChange = this.onChange.bind(this);
 		this.changeGBPage = this.changeGBPage.bind(this);
 		this.changeIFIPage = this.changeIFIPage.bind(this);
 		this.handleSearch = this.handleSearch.bind(this);
-		this.selectGBDevice = this.selectGBDevice.bind(this);
- 		this.getRandomDevices = this.getRandomDevices.bind(this); 
+		this.selectDevice = this.selectDevice.bind(this);
+ 		this.handleGetDevicesList = this.handleGetDevicesList.bind(this); 
 	}
 	 
 	async componentDidMount(){
-		await this.getRandomDevices()
+		await this.handleGetDevicesList(0, 0, this.state.limit);
 		window.addEventListener(
 		      "beforeunload",
 		      this.saveGrabBag.bind(this)
@@ -49,36 +50,38 @@ class GrabBag extends React.Component{
 	}
 
 	
-	async getRandomDevices(){
-		const devices = await this.getDeviceList(this.state.iFixitBag.page, this.state.limit);
-		this.setState(prevState => {
-			prevState.iFixitBag.devices = devices;
-			prevState.iFixitBag.page=0;
-			return  { iFixitBag: prevState.iFixitBag, searchString: ''}
-		})
-	}
-
-	async getDeviceList(page, limit){
-		return iFixitApi.get(`wikis/CATEGORY?limit=${limit}&offset=${page}`).then(response => {
+	async handleGetDevicesList(offset, page, limit){
+		let localState = this.state.iFixitBag;
+		let devices = await iFixitApi.get(`wikis/CATEGORY?limit=${limit}&offset=${offset}`).then(response => {
 			return Array.from(response.data, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 		});
+		devices = this.filterIFiList(devices);
+		if(devices.length === 0){
+			cogoToast.error(`There were no more devices`);
+			return 0;
+		}
+		localState.devices = [devices];
+		localState.page = page;
+	 	this.setState({iFixitBag: localState, searchString: ''});	
 	}
-	
-	async handleSearch(text){
+
+	async handleSearch(text, offset, page, limit){
 		let localState = this.state.iFixitBag;
-		const devices = await iFixitApi.get(`search/${text}?filter=category&limit=${this.state.limit}&offset=${0}`).then(response => {
+		let devices = await iFixitApi.get(`search/${text}?filter=category&limit=${limit}&offset=${offset}`).then(response => {
 			return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
-		localState.devices = devices;
-		localState.page = 0;
+		devices = this.filterIFiList(devices);
+		if(devices.length === 0){
+			cogoToast.error(`There are no more results for ${this.state.searchString}`);
+			return 0;
+		}
+		localState.devices = [devices];
+		localState.page = page;
 	 	this.setState({iFixitBag: localState, searchString: text});	
 	}
 	
-	selectGBDevice(item){
-		this.setState(prevState => {
-			prevState.grabBag.selected = item;
-			return {grabBag : prevState.grabBag}
-		});
+	selectDevice(item){
+		this.setState({selectedItem : item});
 	}
 
 	handleIdCheck(val){
@@ -127,22 +130,11 @@ class GrabBag extends React.Component{
 		const offset = page * this.state.limit;
 		let devices;
 		if(this.state.searchString === ''){
-			devices = await this.getDeviceList(offset, this.state.limit);
+			this.handleGetDevicesList(offset, page, this.state.limit);
 		}
 		else{
-			devices = await iFixitApi.get(`search/${this.state.searchString}?filter=category&limit=${this.state.limit}&offset=${offset}`).then(response => {
-				return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
-			});
+			this.handleSearch(this.state.searchString, offset, page, this.state.limit);
 		}	
-		
-		if(devices.length === 0){
-			cogoToast.error(`There are no more results for ${this.state.searchString}`);
-			return 0;
-		}
-
-		localState.devices = devices;
-		localState.page = page;
-		this.setState({iFixitBag: localState});	
 	
 	}
 
@@ -152,34 +144,34 @@ class GrabBag extends React.Component{
 		
 		if (targetId){
 			const targetBag = this.state[targetId];
-			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceIndex])){
+			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[0][sourceIndex])){
 				const result = move(
-				    sourceBag.devices,
+				    sourceBag.devices[0],
 				    targetBag.devices[targetBag.page],
 				    sourceIndex,
 				    targetIndex
 				  );
 				
 				let iFixitState = this.state.[sourceId];
-				iFixitState.devices = result[0];
+				iFixitState.devices[0] = result[0];
 				
 				let grabBagState = this.state.[targetId];
 				grabBagState.devices[grabBagState.page] = result[1];
 				let newDevices = this.redistributeDevices(grabBagState.devices);
 				grabBagState.devices = newDevices;
-				
+				console.log(grabBagState);
 				return this.setState({[sourceId]: iFixitState, [targetId]: grabBagState});
 		    	}
 			else if (targetId === "iFixitBag"){
 				const result = move(
 				    sourceBag.devices[sourceBag.page],
-				    targetBag.devices,
+				    targetBag.devices[0],
 				    sourceIndex,
 				    targetIndex
 				  );
 				
 				const iFixitState = this.state[targetId];
-				iFixitState.devices = result[1];
+				iFixitState.devices[0] = result[1];
 				
 				const grabBagState = this.state[sourceId];
 				grabBagState.devices[grabBagState.page] = result[0];
@@ -197,23 +189,20 @@ class GrabBag extends React.Component{
 			}
 		}
 		else{
-			if (sourceId === "grabBag" ) {
-				const sourceDevices = sourceBag.devices[sourceBag.page];
-				const result = swap(sourceDevices, sourceIndex, targetIndex);
-				let deepCopy = this.state[sourceId];
-				deepCopy.devices[deepCopy.page] = result;
-				return this.setState({[sourceId]: deepCopy});
-			}
-			else{
-				const sourceDevices = sourceBag.devices;
-				const result = swap(sourceDevices, sourceIndex, targetIndex);
-				return this.setState(prevState => {
-					prevState[sourceId].devices = result;
-					return {[sourceId]: prevState[sourceId]}
-			  	});
-			}
+			const sourceDevices = sourceBag.devices[sourceBag.page];
+			const result = swap(sourceDevices, sourceIndex, targetIndex);
+			let deepCopy = this.state[sourceId];
+			deepCopy.devices[deepCopy.page] = result;
+			return this.setState({[sourceId]: deepCopy});
 		}
 	    }
+
+	filterIFiList(newDevices){
+		let flatWikiIds = this.state.grabBag.devices.flat().map(device => {return device.id});
+		return newDevices.filter(i => !flatWikiIds.includes(i.id));
+	}
+
+
 
 	render(){
 		return (
@@ -224,7 +213,7 @@ class GrabBag extends React.Component{
 							<a href="https://www.ifixit.com/"><img className="logo-image" src="https://upload.wikimedia.org/wikipedia/commons/8/8e/IFixit_logo.svg" alt="iFixit"/></a>
 						</label>
 		      				<Search className="pager" handleSubmit={this.handleSearch}/>
-						<button className="random-button" onClick={this.getRandomDevices}>All Devices</button> 
+						<button className="random-button" onClick={() => this.handleGetDevicesList(0, 0, this.state.limit)}>All Devices</button> 
 					</div>
 				</div>
 				<Collection 
@@ -234,14 +223,14 @@ class GrabBag extends React.Component{
 					handleSubmit={this.handleSearch}
 					changeGBPage={this.changeGBPage}
 					changeIFIPage={this.changeIFIPage}
-					selectGBDevice={this.selectGBDevice}
+					selectDevice={this.selectDevice}
 				/>
 				<div className="selected">
-					<div className="pager">Selected Device: {this.state.grabBag.selected.display_title}</div>
-					{this.state.grabBag.selected.url &&
+					<div className="pager">Selected Device: {this.state.selectedItem.display_title}</div>
+					{this.state.selectedItem.url &&
 					<div className="inner-selected">
 						<div className="pager">iFixit Link: </div>
-						<a className="pager" href={this.state.grabBag.selected.url} target="_blank" rel="noreferrer"> Here</a>
+						<a className="pager" href={this.state.selectedItem.url} target="_blank" rel="noreferrer"> Here</a>
 					</div>
 					}
 				</div>
