@@ -29,11 +29,7 @@ class GrabBag extends React.Component{
 	}
 	 
 	async componentDidMount(){
-		const devices = await this.getDeviceList(this.state.iFixitBag.page, this.state.limit);
-		this.setState(prevState => {
-			prevState.iFixitBag.devices = devices;
-			return  { iFixitBag: prevState.iFixitBag}
-		})
+		await this.getRandomDevices()
 		window.addEventListener(
 		      "beforeunload",
 		      this.saveGrabBag.bind(this)
@@ -92,7 +88,7 @@ class GrabBag extends React.Component{
 		return ans;
 	}
 
-	redistributeGBDevices(stateDevices){
+	redistributeDevices(stateDevices){
 		const deepCopy = stateDevices;
 		
 		let newDevices = []
@@ -163,29 +159,37 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-				let deepCopy = this.state.[targetId];
-				deepCopy.devices[deepCopy.page] = result[1];
-				let newDevices = this.redistributeGBDevices(deepCopy.devices);
-				deepCopy.devices = newDevices;
-				return this.setState({[targetId]: deepCopy});
+				
+				let iFixitState = this.state.[sourceId];
+				iFixitState.devices = result[0];
+				
+				let grabBagState = this.state.[targetId];
+				grabBagState.devices[grabBagState.page] = result[1];
+				let newDevices = this.redistributeDevices(grabBagState.devices);
+				grabBagState.devices = newDevices;
+				
+				return this.setState({[sourceId]: iFixitState, [targetId]: grabBagState});
 		    	}
-			else if (targetId === "trash" && sourceId === "grabBag"){
+			else if (targetId === "iFixitBag"){
 				const result = move(
 				    sourceBag.devices[sourceBag.page],
 				    targetBag.devices,
 				    sourceIndex,
 				    targetIndex
 				  );
-				const deepCopy = this.state[sourceId];
-
-				deepCopy.devices[deepCopy.page] = result[0];
+				
+				const iFixitState = this.state[targetId];
+				iFixitState.devices = result[1];
+				
+				const grabBagState = this.state[sourceId];
+				grabBagState.devices[grabBagState.page] = result[0];
 					
-				let newDevices = this.redistributeGBDevices(deepCopy.devices);
-				if (Math.max(newDevices.length-1, 0) < deepCopy.page){
-					deepCopy.page -=  1;
+				let newDevices = this.redistributeDevices(grabBagState.devices);
+				if (Math.max(newDevices.length-1, 0) < grabBagState.page){
+					grabBagState.page -=  1;
 				}
-				deepCopy.devices = newDevices;
-				return this.setState({[sourceId]: deepCopy});
+				grabBagState.devices = newDevices;
+				return this.setState({[sourceId]: grabBagState, [targetId]: iFixitState});
 
 			}
 			else if (targetId === "trash"){

@@ -30,16 +30,6 @@ class Collection extends React.Component{
 						changeBagPage={this.props.changeGBPage} 
 						selectDevice={this.props.selectGBDevice} />
 				</div>
-				<div className="trash-container"> 
-					<GridDropZone
-					    className="drop-trash trash"
-					    id="trash"
-					    boxesPerRow={0}
-					    rowHeight={3}
-					  >
-						<FaTrash className="fa-trash" />
-					  </GridDropZone>
-				</div>
 		  	</div>
 		      </GridContextProvider>
 		  </div>
