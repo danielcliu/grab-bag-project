@@ -96,10 +96,6 @@ class GrabBag extends React.Component{
 
 	handleIdCheck(val){
 		const allGBDevices = this.state.grabBag.devices;
-		console.log("all GB Devices: ");
-		console.log(allGBDevices);
-		console.log("Val");
-		console.log(val);
 		const ans = allGBDevices.flat().some(device => val.id === device.id);
 		if (ans) cogoToast.error(`The device ${val.display_title} is already in the user Grab Bag`);
 		return ans;
