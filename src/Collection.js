@@ -18,7 +18,7 @@ class Collection extends React.Component{
 				<div className="inner-container">
 		  			<div className="title">iFixit Devices</div>
 					<Bag bagName="iFixitBag" 
-						bagDevices={this.props.iFixitBag.devices[0]} 
+						bagDevices={this.props.iFixitBag.devices[this.props.iFixitBag.page]} 
 						bagPage={this.props.iFixitBag.page} 
 						changeBagPage={this.props.changeIFIPage} 
 						selectDevice={this.props.selectDevice} />

@@ -60,7 +60,12 @@ class GrabBag extends React.Component{
 			cogoToast.error(`There were no more devices`);
 			return 0;
 		}
-		localState.devices = [devices];
+		if (page === 0){
+			localState.devices = [devices];
+		}
+		else if(localState.devices.length <= page){
+			localState.devices.push(devices);
+		}
 		localState.page = page;
 	 	this.setState({iFixitBag: localState, searchString: ''});	
 	}
@@ -75,7 +80,12 @@ class GrabBag extends React.Component{
 			cogoToast.error(`There are no more results for ${this.state.searchString}`);
 			return 0;
 		}
-		localState.devices = [devices];
+		if (page === 0){
+			localState.devices = [devices];
+		}
+		else if(localState.devices.length <= page){
+			localState.devices.push(devices);
+		}
 		localState.page = page;
 	 	this.setState({iFixitBag: localState, searchString: text});	
 	}
@@ -86,6 +96,10 @@ class GrabBag extends React.Component{
 
 	handleIdCheck(val){
 		const allGBDevices = this.state.grabBag.devices;
+		console.log("all GB Devices: ");
+		console.log(allGBDevices);
+		console.log("Val");
+		console.log(val);
 		const ans = allGBDevices.flat().some(device => val.id === device.id);
 		if (ans) cogoToast.error(`The device ${val.display_title} is already in the user Grab Bag`);
 		return ans;
@@ -144,16 +158,16 @@ class GrabBag extends React.Component{
 		
 		if (targetId){
 			const targetBag = this.state[targetId];
-			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[0][sourceIndex])){
+			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceBag.page][sourceIndex])){
 				const result = move(
-				    sourceBag.devices[0],
+				    sourceBag.devices[sourceBag.page],
 				    targetBag.devices[targetBag.page],
 				    sourceIndex,
 				    targetIndex
 				  );
 				
 				let iFixitState = this.state.[sourceId];
-				iFixitState.devices[0] = result[0];
+				iFixitState.devices[sourceBag.page] = result[0];
 				
 				let grabBagState = this.state.[targetId];
 				grabBagState.devices[grabBagState.page] = result[1];
@@ -165,13 +179,13 @@ class GrabBag extends React.Component{
 			else if (targetId === "iFixitBag"){
 				const result = move(
 				    sourceBag.devices[sourceBag.page],
-				    targetBag.devices[0],
+				    targetBag.devices[targetBag.page],
 				    sourceIndex,
 				    targetIndex
 				  );
 				
 				const iFixitState = this.state[targetId];
-				iFixitState.devices[0] = result[1];
+				iFixitState.devices[targetBag.page] = result[1];
 				
 				const grabBagState = this.state[sourceId];
 				grabBagState.devices[grabBagState.page] = result[0];
