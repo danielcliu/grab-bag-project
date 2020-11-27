@@ -60,22 +60,36 @@ class GrabBag extends React.Component{
 		let newDevices = pageDevices;
 		while(newDevices.length < this.state.limit){
 			let diff = this.state.limit - newDevices.length;
-			let devices = await iFixitApi.get(`wikis/CATEGORY?limit=${diff}&offset=${offset}`).then(response => {
+			console.log("DIFF: ");
+			console.log(diff);
+			console.log(newOffset);
+			console.log("newDevices:");
+			console.log(newDevices);
+			let devices = await iFixitApi.get(`wikis/CATEGORY?limit=${diff}&offset=${newOffset}`).then(response => {
 				return Array.from(response.data, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
+			//todo don't load this in repeatedly
 			if(devices.length === 0){
-				cogoToast.error(`There were no more devices`);
-				break;
+				if (page !== this.state.iFixitBag.page){
+					cogoToast.error(`There were no more devices`);
+				}
+				if (newDevices.length === 0){
+					return localState;
+					
+				}
+				else{
+					break;
+				}
 			}
 			console.log(devices)
 			devices = this.filterIFiList(devices);
 			console.log(devices)
 			newDevices.push(...devices);
 			console.log(newDevices);
-			newOffset += diff;
+			newOffset = newOffset + diff;
 			console.log("In while");
 			console.log(newDevices.length);
-			console.log(this.state.limit);
+			console.log(newOffset);
 		}
 		if (page === 0){
 			localState.devices = [newDevices];
@@ -120,12 +134,28 @@ class GrabBag extends React.Component{
 		let newDevices = pageDevices;
 		while(newDevices.length < this.state.limit){
 			let diff = this.state.limit - newDevices.length;
-			let devices = await iFixitApi.get(`search/${text}?filter=category&limit=${diff}&offset=${offset}`).then(response => {
+			let devices = await iFixitApi.get(`search/${text}?filter=category&limit=${diff}&offset=${newOffset}`).then(response => {
 				return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
+			//need to 
+			/*
 			if(devices.length === 0){
 				cogoToast.error(`There were no more devices`);
 				break;
+			}
+			*/
+			
+			if(devices.length === 0){
+				if (page !== this.state.iFixitBag.page){
+					cogoToast.error(`There were no more devices`);
+				}
+				if (newDevices.length === 0){
+					return localState;
+					
+				}
+				else{
+					break;
+				}
 			}
 			console.log(devices)
 			devices = this.filterIFiList(devices);
