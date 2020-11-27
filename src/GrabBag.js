@@ -50,7 +50,7 @@ class GrabBag extends React.Component{
 		sessionStorage.setItem('grabBagDevices', JSON.stringify(this.state.grabBag.devices));
 	}
 
-	
+	// makes the api call to get the iFixit Devices	
 	async handleGetDeviceList(text, offset, page, pageDevices){
 		let localState = this.state.iFixitBag;
 		let newOffset = offset;
@@ -62,15 +62,18 @@ class GrabBag extends React.Component{
 				let results = ( text === '') ? response.data : response.data.results;
 				return Array.from(results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
-			//todo don't load this in repeatedly
+			// if there was no response from the API
 			if(devices.length === 0){
+				// if we were trying to load an additional page
 				if (page > this.state.iFixitBag.page){
 					cogoToast.error(`There were no more devices`);
 				}
-				if (page === 0 && newDevices.length === 0 && text !== ''){
+				// or if its the first page and the page is blank already and its a search call
+				else if (page === 0 && newDevices.length === 0 && text !== ''){
 					cogoToast.error(`There were no results for ${text}`);
 				}
-				if (newDevices.length === 0 && page !== 0){
+
+				if (newDevices.length === 0){
 					return localState;
 				}
 				else{
@@ -100,6 +103,8 @@ class GrabBag extends React.Component{
 		this.setState({selectedItem : item});
 	}
 
+	// makes sure that the id of the device being moved is not already in grab Bag
+	// check if necessary
 	handleIdCheck(val){
 		const allGBDevices = this.state.grabBag.devices;
 		const ans = allGBDevices.flat().some(device => val.id === device.id);
@@ -108,15 +113,16 @@ class GrabBag extends React.Component{
 		return ans;
 	}
 	
+	// filter out all devices from the iFixit Bag that are already in grab Bag
 	filterIFiList(newDevices){
 		let flatWikiIds = this.state.grabBag.devices.flat().map(device => {return device.id});
 		
 		return newDevices.filter(i => !flatWikiIds.includes(i.id));
 	}
 
+	// makes sure no page has more than state.limit items
 	redistributeDevices(stateDevices){
 		const deepCopy = stateDevices;
-		
 		let newDevices = []
 		let flatCopy = deepCopy.flat();
 		let flatLen = flatCopy.length;
@@ -150,9 +156,11 @@ class GrabBag extends React.Component{
 			cogoToast.error('There is not a page 0');
 			return 0;
 		} 
+		// if we are loading a page that hasn't been loaded yet
 		if(page+1 > localState.devices.length){
 			localState = await this.handleGetDeviceList(this.state.searchString, localState.offset, page, []);
 		}
+		// if this is the last loaded page in the list
 		else if (page+1 === localState.devices.length && localState.devices[page].length !== this.state.limit){
 			localState = await this.handleGetDeviceList(this.state.searchString, localState.offset, page, localState.devices[page]);
 		}
@@ -177,19 +185,21 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-				
+				// setting new iFixit Bag
 				let iFixitState = this.state.[sourceId];
 				iFixitState.devices[sourceBag.page] = result[0];
 				let newIFIDevices = this.redistributeDevices(iFixitState.devices);
-				//if the object was the last one in the page
+				// if the object was the last one in the page we need to jump down a page
 				if (Math.max(newIFIDevices.length-1, 0) < iFixitState.page){
 					iFixitState.page -=  1;
 				}
 				iFixitState.devices = newIFIDevices;
+				// load in devices to fill the page if its the last page
 				if(iFixitState.page+1 === iFixitState.devices.length){
 					iFixitState = await this.handleGetDeviceList(this.state.searchString, iFixitState.offset, iFixitState.page, iFixitState.devices[iFixitState.page]);
 				}
 				
+				// setting new grab Bag
 				let grabBagState = this.state.[targetId];
 				grabBagState.devices[grabBagState.page] = result[1];
 				let newGBDevices = this.redistributeDevices(grabBagState.devices);
@@ -204,16 +214,17 @@ class GrabBag extends React.Component{
 				    sourceIndex,
 				    targetIndex
 				  );
-				
+				// setting new iFixit Bag
 				const iFixitState = this.state[targetId];
 				iFixitState.devices[targetBag.page] = result[1];
 				let newIFIDevices = this.redistributeDevices(iFixitState.devices);
 				iFixitState.devices = newIFIDevices;
 				
+				// setting new grab Bag
 				const grabBagState = this.state[sourceId];
 				grabBagState.devices[grabBagState.page] = result[0];
-					
 				let newDevices = this.redistributeDevices(grabBagState.devices);
+				// if the object was the last one in the page we need to jump down a page
 				if (Math.max(newDevices.length-1, 0) < grabBagState.page){
 					grabBagState.page -=  1;
 				}

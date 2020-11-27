@@ -8,7 +8,6 @@ import Bag from "./Bag.js";
 class Collection extends React.Component{
 	
 	render(){
-	console.log(this.props);
 	 return (
 		  <div>
 		      <GridContextProvider onChange={this.props.onChange}>
