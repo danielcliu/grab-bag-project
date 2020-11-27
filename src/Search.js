@@ -16,8 +16,7 @@ class SearchBar extends React.Component{
 	
 	handleSubmit(event){
 		event.preventDefault();
-		//to do, pass state limit instead of hardcoding 24
-		this.props.handleSubmit(this.state.searchString, 0, 0, 24);
+		this.props.handleSubmit(this.state.searchString);
 	}
 	
 	render(){
