@@ -24,14 +24,14 @@ class GrabBag extends React.Component{
 		this.onChange = this.onChange.bind(this);
 		this.changeGBPage = this.changeGBPage.bind(this);
 		this.changeIFIPage = this.changeIFIPage.bind(this);
-		this.handleSearch = this.handleSearch.bind(this);
+		//this.handleSearch = this.handleSearch.bind(this);
 		this.selectDevice = this.selectDevice.bind(this);
- 		this.handleGetDevicesList = this.handleGetDevicesList.bind(this); 
+ 		this.handleGetDeviceList = this.handleGetDeviceList.bind(this); 
 		this.resetSearch = this.resetSearch.bind(this);
 	}
 	 
 	async componentDidMount(){
-		let newIFixitState = await this.handleGetDevicesList(0, this.state.iFixitBag.page, []);
+		let newIFixitState = await this.handleGetDeviceList('', 0, this.state.iFixitBag.page, []);
 		console.log("MOUNT");
 		console.log(newIFixitState);
 		this.setState({iFixitBag: newIFixitState});
@@ -54,7 +54,9 @@ class GrabBag extends React.Component{
 	}
 
 	
-	async handleGetDevicesList(offset, page, pageDevices){
+	async handleGetDeviceList(text, offset, page, pageDevices){
+		console.log("IN HGDL");
+		console.log(text);
 		let localState = this.state.iFixitBag;
 		let newOffset = offset;
 		let newDevices = pageDevices;
@@ -65,17 +67,25 @@ class GrabBag extends React.Component{
 			console.log(newOffset);
 			console.log("newDevices:");
 			console.log(newDevices);
-			let devices = await iFixitApi.get(`wikis/CATEGORY?limit=${diff}&offset=${newOffset}`).then(response => {
-				return Array.from(response.data, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
+			//consolidate both functions and have this call depend on a search string parameter
+			let searchUrl = (text === '') ? `wikis/CATEGORY?limit=${diff}&offset=${newOffset}` : `search/${text}?filter=category&limit=${diff}&offset=${newOffset}`;
+			console.log(searchUrl);
+			let devices = await iFixitApi.get(searchUrl).then(response => {
+				let results = ( text === '') ? response.data : response.data.results;
+				return Array.from(results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
+			console.log("DEVICES");
+			console.log(devices);
 			//todo don't load this in repeatedly
 			if(devices.length === 0){
-				if (page !== this.state.iFixitBag.page){
+				if (page > this.state.iFixitBag.page){
 					cogoToast.error(`There were no more devices`);
 				}
-				if (newDevices.length === 0){
+				if (page === 0 && newDevices.length === 0 && text !== ''){
+					cogoToast.error(`There were no results for ${text}`);
+				}
+				if (newDevices.length === 0 && page !== 0){
 					return localState;
-					
 				}
 				else{
 					break;
@@ -104,30 +114,9 @@ class GrabBag extends React.Component{
 		localState.offset = newOffset;
 		console.log("Handle GDL");
 		console.log(localState);
-	 	//this.setState({iFixitBag: localState, searchString: ''});	
 		return localState	
-		/*
-		let localState = this.state.iFixitBag;
-		let devices = await iFixitApi.get(`wikis/CATEGORY?limit=${limit}&offset=${offset}`).then(response => {
-			return Array.from(response.data, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
-		});
-		if(devices.length === 0){
-			cogoToast.error(`There were no more devices`);
-			return 0;
-		}
-		
-		devices = this.filterIFiList(devices);
-		if (page === 0){
-			localState.devices = [devices];
-		}
-		else if(localState.devices.length <= page){
-			localState.devices.push(devices);
-		}
-		localState.page = page;
-	 	this.setState({iFixitBag: localState, searchString: ''});	
-		*/
 	}
-
+	/*
 	async handleSearch(text, offset, page, pageDevices){
 		let localState = this.state.iFixitBag;
 		let newOffset = offset;
@@ -138,12 +127,6 @@ class GrabBag extends React.Component{
 				return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
 			//need to 
-			/*
-			if(devices.length === 0){
-				cogoToast.error(`There were no more devices`);
-				break;
-			}
-			*/
 			
 			if(devices.length === 0){
 				if (page !== this.state.iFixitBag.page){
@@ -183,7 +166,7 @@ class GrabBag extends React.Component{
 	 	//this.setState({iFixitBag: localState, searchString: ''});	
 		return localState	
 	}
-		
+	*/		
 	
 	async fillSearchPage(text, offset, page){
 		
@@ -237,37 +220,18 @@ class GrabBag extends React.Component{
 			return 0;
 		} 
 		//const offset = page * this.state.limit;
-		let devices;
-		if(this.state.searchString === ''){
-			if(page+1 > localState.devices.length){
-				localState = await this.handleGetDevicesList(localState.offset, page, []);
-			}
-			else if (page+1 === localState.devices.length && localState.devices[page].length !== this.state.limit){
-				localState = await this.handleGetDevicesList(localState.offset, page, localState.devices[page]);
-			}
-			else{
-				let newDevices = this.redistributeDevices(localState.devices);
-				localState.devices = newDevices;
-				localState.page = page;
-			}
-			this.setState({iFixitBag: localState});
+		if(page+1 > localState.devices.length){
+			localState = await this.handleGetDeviceList(this.state.searchString, localState.offset, page, []);
+		}
+		else if (page+1 === localState.devices.length && localState.devices[page].length !== this.state.limit){
+			localState = await this.handleGetDeviceList(this.state.searchString, localState.offset, page, localState.devices[page]);
 		}
 		else{
-			if(page+1 > localState.devices.length){
-				localState = await this.handleSearch(this.state.searchString, localState.offset, page, []);
-			}
-			else if (page+1 === localState.devices.length && localState.devices[page].length !== this.state.limit){
-				localState = await this.handleSearch(this.state.searchString, localState.offset, page, localState.devices[page]);
-			}
-			else{
-				let newDevices = this.redistributeDevices(localState.devices);
-				localState.devices = newDevices;
-				localState.page = page;
-			}
-			this.setState({iFixitBag: localState});
-			//this.handleSearch(this.state.searchString, offset, page, this.state.iFixitBag.devices[page]);
-		}	
-	
+			let newDevices = this.redistributeDevices(localState.devices);
+			localState.devices = newDevices;
+			localState.page = page;
+		}
+		this.setState({iFixitBag: localState});
 	}
 	
 	
@@ -295,12 +259,7 @@ class GrabBag extends React.Component{
 				}
 				iFixitState.devices = newIFIDevices;
 				if(iFixitState.page+1 === iFixitState.devices.length){
-					if (this.state.searchString === ''){
-						iFixitState = await this.handleGetDevicesList(iFixitState.offset, iFixitState.page, iFixitState.devices[iFixitState.page]);
-					}
-					else{
-						iFixitState = await this.handleSearch(this.state.searchString, iFixitState.offset, iFixitState.page, iFixitState.devices[iFixitState.page]);
-					}
+					iFixitState = await this.handleGetDeviceList(this.state.searchString, iFixitState.offset, iFixitState.page, iFixitState.devices[iFixitState.page]);
 				}
 				
 				let grabBagState = this.state.[targetId];
@@ -353,16 +312,17 @@ class GrabBag extends React.Component{
 		return newDevices.filter(i => !flatWikiIds.includes(i.id));
 	}
 
+	/*
 	async resetGDL(){
 		let iFixitState = this.state.iFixitBag;
-		let newState = await this.handleGetDevicesList(0, 0, [])
+		let newState = await this.handleGetDeviceList('', 0, 0, [])
 		iFixitState = newState
 		this.setState({iFixitBag: iFixitState, searchString: ''});
 	}
-
+	*/
 	async resetSearch(searchString){
 		let iFixitState = this.state.iFixitBag;
-		let newState = await this.handleSearch(searchString, 0, 0, [])
+		let newState = await this.handleGetDeviceList(searchString, 0, 0, [])
 		iFixitState = newState
 		this.setState({iFixitBag: iFixitState, searchString: searchString});
 	
@@ -377,7 +337,7 @@ class GrabBag extends React.Component{
 							<a href="https://www.ifixit.com/"><img className="logo-image" src="https://upload.wikimedia.org/wikipedia/commons/8/8e/IFixit_logo.svg" alt="iFixit"/></a>
 						</label>
 		      				<Search className="pager" handleSubmit={this.resetSearch}/>
-						<button className="random-button" onClick={() => this.resetGDL()}>All Devices</button> 
+						<button className="random-button" onClick={() => this.resetSearch('')}>All Devices</button> 
 					</div>
 				</div>
 				<Collection 
