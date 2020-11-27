@@ -1,11 +1,9 @@
 import React from "react";
 import {
 	  GridContextProvider,
-	  GridDropZone,
 } from "react-grid-dnd";
 import "./App.css";
 import Bag from "./Bag.js";
-import {FaTrash}  from "react-icons/fa";
 
 class Collection extends React.Component{
 	

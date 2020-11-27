@@ -24,7 +24,6 @@ class GrabBag extends React.Component{
 		this.onChange = this.onChange.bind(this);
 		this.changeGBPage = this.changeGBPage.bind(this);
 		this.changeIFIPage = this.changeIFIPage.bind(this);
-		//this.handleSearch = this.handleSearch.bind(this);
 		this.selectDevice = this.selectDevice.bind(this);
  		this.handleGetDeviceList = this.handleGetDeviceList.bind(this); 
 		this.resetSearch = this.resetSearch.bind(this);
@@ -32,8 +31,6 @@ class GrabBag extends React.Component{
 	 
 	async componentDidMount(){
 		let newIFixitState = await this.handleGetDeviceList('', 0, this.state.iFixitBag.page, []);
-		console.log("MOUNT");
-		console.log(newIFixitState);
 		this.setState({iFixitBag: newIFixitState});
 		window.addEventListener(
 		      "beforeunload",
@@ -55,27 +52,16 @@ class GrabBag extends React.Component{
 
 	
 	async handleGetDeviceList(text, offset, page, pageDevices){
-		console.log("IN HGDL");
-		console.log(text);
 		let localState = this.state.iFixitBag;
 		let newOffset = offset;
 		let newDevices = pageDevices;
 		while(newDevices.length < this.state.limit){
 			let diff = this.state.limit - newDevices.length;
-			console.log("DIFF: ");
-			console.log(diff);
-			console.log(newOffset);
-			console.log("newDevices:");
-			console.log(newDevices);
-			//consolidate both functions and have this call depend on a search string parameter
 			let searchUrl = (text === '') ? `wikis/CATEGORY?limit=${diff}&offset=${newOffset}` : `search/${text}?filter=category&limit=${diff}&offset=${newOffset}`;
-			console.log(searchUrl);
 			let devices = await iFixitApi.get(searchUrl).then(response => {
 				let results = ( text === '') ? response.data : response.data.results;
 				return Array.from(results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
 			});
-			console.log("DEVICES");
-			console.log(devices);
 			//todo don't load this in repeatedly
 			if(devices.length === 0){
 				if (page > this.state.iFixitBag.page){
@@ -91,15 +77,9 @@ class GrabBag extends React.Component{
 					break;
 				}
 			}
-			console.log(devices)
 			devices = this.filterIFiList(devices);
-			console.log(devices)
 			newDevices.push(...devices);
-			console.log(newDevices);
 			newOffset = newOffset + diff;
-			console.log("In while");
-			console.log(newDevices.length);
-			console.log(newOffset);
 		}
 		if (page === 0){
 			localState.devices = [newDevices];
@@ -112,64 +92,8 @@ class GrabBag extends React.Component{
 		}
 		localState.page = page;
 		localState.offset = newOffset;
-		console.log("Handle GDL");
-		console.log(localState);
-		return localState	
-	}
-	/*
-	async handleSearch(text, offset, page, pageDevices){
-		let localState = this.state.iFixitBag;
-		let newOffset = offset;
-		let newDevices = pageDevices;
-		while(newDevices.length < this.state.limit){
-			let diff = this.state.limit - newDevices.length;
-			let devices = await iFixitApi.get(`search/${text}?filter=category&limit=${diff}&offset=${newOffset}`).then(response => {
-				return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid, 'image': device.image.standard, 'url': device.url}}); 
-			});
-			//need to 
-			
-			if(devices.length === 0){
-				if (page !== this.state.iFixitBag.page){
-					cogoToast.error(`There were no more devices`);
-				}
-				if (newDevices.length === 0){
-					return localState;
-					
-				}
-				else{
-					break;
-				}
-			}
-			console.log(devices)
-			devices = this.filterIFiList(devices);
-			console.log(devices)
-			newDevices.push(...devices);
-			console.log(newDevices);
-			newOffset += diff;
-			console.log("In while");
-			console.log(newDevices.length);
-			console.log(this.state.limit);
-		}
-		if (page === 0){
-			localState.devices = [newDevices];
-		}
-		else if(localState.devices.length <= page){
-			localState.devices.push(newDevices);
-		}
-		else{
-			localState.devices[page] = newDevices;
-		}
-		localState.page = page;
-		localState.offset = newOffset;
-		console.log("Handle GDL");
-		console.log(localState);
-	 	//this.setState({iFixitBag: localState, searchString: ''});	
-		return localState	
-	}
-	*/		
-	
-	async fillSearchPage(text, offset, page){
 		
+		return localState	
 	}
 	
 	selectDevice(item){
@@ -180,7 +104,14 @@ class GrabBag extends React.Component{
 		const allGBDevices = this.state.grabBag.devices;
 		const ans = allGBDevices.flat().some(device => val.id === device.id);
 		if (ans) cogoToast.error(`The device ${val.display_title} is already in the user Grab Bag`);
+		
 		return ans;
+	}
+	
+	filterIFiList(newDevices){
+		let flatWikiIds = this.state.grabBag.devices.flat().map(device => {return device.id});
+		
+		return newDevices.filter(i => !flatWikiIds.includes(i.id));
 	}
 
 	redistributeDevices(stateDevices){
@@ -194,11 +125,11 @@ class GrabBag extends React.Component{
 			for (let j = 0; j < this.state.limit; j++){
 				if(j+i === flatLen){break;}
 				itemList.push(flatCopy[i+j]);
-			
 			} 
 			newDevices.push(itemList);
 		}
 		if (newDevices.length===0) newDevices.push([]);
+		
 		return newDevices;
 	}
 
@@ -219,7 +150,6 @@ class GrabBag extends React.Component{
 			cogoToast.error('There is not a page 0');
 			return 0;
 		} 
-		//const offset = page * this.state.limit;
 		if(page+1 > localState.devices.length){
 			localState = await this.handleGetDeviceList(this.state.searchString, localState.offset, page, []);
 		}
@@ -233,7 +163,6 @@ class GrabBag extends React.Component{
 		}
 		this.setState({iFixitBag: localState});
 	}
-	
 	
 	async onChange(sourceId, sourceIndex, targetIndex, targetId) {
 		const sourceBag = this.state[sourceId];
@@ -251,7 +180,6 @@ class GrabBag extends React.Component{
 				
 				let iFixitState = this.state.[sourceId];
 				iFixitState.devices[sourceBag.page] = result[0];
-				
 				let newIFIDevices = this.redistributeDevices(iFixitState.devices);
 				//if the object was the last one in the page
 				if (Math.max(newIFIDevices.length-1, 0) < iFixitState.page){
@@ -266,8 +194,8 @@ class GrabBag extends React.Component{
 				grabBagState.devices[grabBagState.page] = result[1];
 				let newGBDevices = this.redistributeDevices(grabBagState.devices);
 				grabBagState.devices = newGBDevices;
+				
 				return this.setState({[sourceId]: iFixitState, [targetId]: grabBagState});
-		    		
 			}
 			else if (targetId === "iFixitBag"){
 				const result = move(
@@ -280,7 +208,6 @@ class GrabBag extends React.Component{
 				const iFixitState = this.state[targetId];
 				iFixitState.devices[targetBag.page] = result[1];
 				let newIFIDevices = this.redistributeDevices(iFixitState.devices);
-				//if the object was the last one in the page
 				iFixitState.devices = newIFIDevices;
 				
 				const grabBagState = this.state[sourceId];
@@ -291,11 +218,8 @@ class GrabBag extends React.Component{
 					grabBagState.page -=  1;
 				}
 				grabBagState.devices = newDevices;
+				
 				return this.setState({[sourceId]: grabBagState, [targetId]: iFixitState});
-
-			}
-			else if (targetId === "trash"){
-				cogoToast.error('Only devices from the Grab Bag grid can be deleted');
 			}
 		}
 		else{
@@ -303,29 +227,16 @@ class GrabBag extends React.Component{
 			const result = swap(sourceDevices, sourceIndex, targetIndex);
 			let sourceState = this.state[sourceId];
 			sourceState.devices[sourceState.page] = result;
+			
 			return this.setState({[sourceId]: sourceState});
 		}
 	    }
 
-	filterIFiList(newDevices){
-		let flatWikiIds = this.state.grabBag.devices.flat().map(device => {return device.id});
-		return newDevices.filter(i => !flatWikiIds.includes(i.id));
-	}
-
-	/*
-	async resetGDL(){
-		let iFixitState = this.state.iFixitBag;
-		let newState = await this.handleGetDeviceList('', 0, 0, [])
-		iFixitState = newState
-		this.setState({iFixitBag: iFixitState, searchString: ''});
-	}
-	*/
 	async resetSearch(searchString){
 		let iFixitState = this.state.iFixitBag;
 		let newState = await this.handleGetDeviceList(searchString, 0, 0, [])
 		iFixitState = newState
 		this.setState({iFixitBag: iFixitState, searchString: searchString});
-	
 	}
 
 	render(){
