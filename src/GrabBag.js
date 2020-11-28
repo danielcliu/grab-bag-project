@@ -72,8 +72,9 @@ class GrabBag extends React.Component{
 				else if (page === 0 && newDevices.length === 0 && text !== ''){
 					cogoToast.error(`There were no results for ${text}`);
 				}
-
-				if (newDevices.length === 0){
+				
+				// if its a blank additional page and not a reset
+				if (newDevices.length === 0 && page !== 0){
 					return localState;
 				}
 				else{
@@ -103,16 +104,6 @@ class GrabBag extends React.Component{
 		this.setState({selectedItem : item});
 	}
 
-	// makes sure that the id of the device being moved is not already in grab Bag
-	// check if necessary
-	handleIdCheck(val){
-		const allGBDevices = this.state.grabBag.devices;
-		const ans = allGBDevices.flat().some(device => val.id === device.id);
-		if (ans) cogoToast.error(`The device ${val.display_title} is already in the user Grab Bag`);
-		
-		return ans;
-	}
-	
 	// filter out all devices from the iFixit Bag that are already in grab Bag
 	filterIFiList(newDevices){
 		let flatWikiIds = this.state.grabBag.devices.flat().map(device => {return device.id});
@@ -178,7 +169,7 @@ class GrabBag extends React.Component{
 		
 		if (targetId){
 			const targetBag = this.state[targetId];
-			if (targetId === "grabBag" && !this.handleIdCheck(sourceBag.devices[sourceBag.page][sourceIndex])){
+			if (targetId === "grabBag"){
 				const result = move(
 				    sourceBag.devices[sourceBag.page],
 				    targetBag.devices[targetBag.page],
