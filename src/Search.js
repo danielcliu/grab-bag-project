@@ -21,7 +21,7 @@ const renderInputComponent = inputProps => (
 class SearchBar extends React.Component{
 	constructor(props){
 		super(props);
-		this.state = {value : 'test', suggestions:[{'display_title': 'hello', 'id' : 1}]};
+		this.state = {value : '', suggestions:[]};
 
 		this.onChange = this.onChange.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
@@ -30,10 +30,8 @@ class SearchBar extends React.Component{
 	}
 
 	onChange = (event, { newValue }) => {
-		    this.setState({
-			          value: newValue
-			        });
-		  };
+		this.setState({ value: newValue	});
+	};
 
 	async onSuggestionsFetchRequested({ value }){
 		let newSuggestions = await iFixitApi.get(`suggest/${value}?doctypes=category`).then(response => {
@@ -56,12 +54,6 @@ class SearchBar extends React.Component{
 		this.props.handleSubmit(this.state.value);
 	}
 
-	handleClick(event){
-		event.preventDefault();
-		
-		this.setState({value: event.currentTarget.innerText});
-	}
-
 	render(){
 		const { value, suggestions } = this.state;
 		const inputProps = {
@@ -70,7 +62,6 @@ class SearchBar extends React.Component{
 			      onChange: this.onChange
 			    };
 
-		console.log(this.state);
 		return(	
 		<form className="search-bar" onSubmit={this.handleSubmit}>
 			<Autosuggest
@@ -88,8 +79,3 @@ class SearchBar extends React.Component{
 
 }
 export default SearchBar;
-			/*
-			<p>
-				{this.state.suggestions.map(device => <div>{device.display_title}</div>)}
-			</p>
-			*/
