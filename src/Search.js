@@ -1,32 +1,95 @@
 import React from "react";
 import "./App.css";
+import "./Search.css";
+import iFixitApi from './iFixitApi';
+import Autosuggest from 'react-autosuggest';
+import { FaSearch } from 'react-icons/fa';
+
+const getSuggestionValue = suggestion => suggestion.display_title;
+
+const renderSuggestion = suggestion => (
+	<span>{suggestion.display_title}</span>
+);
+
+const renderInputComponent = inputProps => (
+	  <div className="inputContainer">
+	    <FaSearch className="icon" />
+	    <input {...inputProps} />
+	  </div>
+);
 
 class SearchBar extends React.Component{
 	constructor(props){
 		super(props);
-		this.state = {searchString : ''};
+		this.state = {value : 'test', suggestions:[{'display_title': 'hello', 'id' : 1}]};
 
-		this.handleChange = this.handleChange.bind(this);
+		this.onChange = this.onChange.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
+		this.onSuggestionsFetchRequested = this.onSuggestionsFetchRequested.bind(this);
+		this.onSuggestionsClearRequested = this.onSuggestionsClearRequested.bind(this);
 	}
 
-	handleChange(event){
-		this.setState({searchString : event.target.value});
-	}
+	onChange = (event, { newValue }) => {
+		    this.setState({
+			          value: newValue
+			        });
+		  };
+
+	async onSuggestionsFetchRequested({ value }){
+		let newSuggestions = await iFixitApi.get(`suggest/${value}?doctypes=category`).then(response => {
+			return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid}}); 
+		});
+		this.setState({
+		  suggestions: newSuggestions
+		});
+	};
 	
+	onSuggestionsClearRequested = () => {
+		this.setState({
+	  		suggestions: []
+		});
+		};
+	
+
 	handleSubmit(event){
 		event.preventDefault();
-		this.props.handleSubmit(this.state.searchString);
+		this.props.handleSubmit(this.state.value);
 	}
-	
+
+	handleClick(event){
+		event.preventDefault();
+		
+		this.setState({value: event.currentTarget.innerText});
+	}
+
 	render(){
+		const { value, suggestions } = this.state;
+		const inputProps = {
+			      placeholder: 'Search iFixit Devices',
+			      value,
+			      onChange: this.onChange
+			    };
+
+		console.log(this.state);
 		return(	
 		<form className="search-bar" onSubmit={this.handleSubmit}>
-	  		<input type="text" value={this.state.searchString} onChange={this.handleChange} placeholder="Search iFixit Devices" />
-			<input type="submit" value="Search" />
-	      	</form>
+			<Autosuggest
+			        suggestions={suggestions}
+			        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+			        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+				getSuggestionValue={getSuggestionValue}
+			        renderSuggestion={renderSuggestion}
+			        inputProps={inputProps}
+			      	renderInputComponent={renderInputComponent}
+			/>
+		</form>
 		);
 	}
 
 }
 export default SearchBar;
+			/*
+			<p>
+				{this.state.suggestions.map(device => <div>{device.display_title}</div>)}
+			</p>
+			*/
