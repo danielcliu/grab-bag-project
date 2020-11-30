@@ -67,34 +67,6 @@
 	text-align: center;
 }
 
-
-.trash-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 225px;
-}
-.drop-trash {
-  flex: 1;
-  height: 40px;
-  width: 40px;
-}
-
-.drop-trash:hover{
-	background-color: brown;
-}
-
-.fa-trash{
-	font-size: 32px;
-	text-align: center;
-  border: 3px solid rgba(0, 0, 1, 0.1);
-}
-.fa-trash:hover {
-  border: 3px solid rgba(0, 0, 1, 0.1);
-}
-
-
-
 .selected{
   border: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
@@ -112,7 +84,6 @@
   align-items: center;
 
 }
-
 
 .header{
   display: flex;
