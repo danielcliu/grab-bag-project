@@ -22,20 +22,15 @@ class SearchBar extends React.Component{
 	constructor(props){
 		super(props);
 		this.state = {value : '', suggestions:[]};
-
-		this.onChange = this.onChange.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
-		this.onSuggestionsFetchRequested = this.onSuggestionsFetchRequested.bind(this);
-		this.onSuggestionsClearRequested = this.onSuggestionsClearRequested.bind(this);
 	}
 
 	onChange = (event, { newValue }) => {
 		this.setState({ value: newValue	});
 	};
 
-	async onSuggestionsFetchRequested({ value }){
-		let newSuggestions = await iFixitApi.get(`suggest/${value}?doctypes=category`).then(response => {
-			return Array.from(response.data.results, device => {return { 'display_title': device.display_title, 'id': device.wikiid}}); 
+	onSuggestionsFetchRequested = async ({ value }) => {
+		let newSuggestions = await iFixitApi.get(`suggest/${value}?doctypes=category`).then(response => { 
+			return response.data.results.map( device => ({ display_title: device.display_title, id: device.wikiid}));
 		});
 		this.setState({
 		  suggestions: newSuggestions
@@ -49,10 +44,10 @@ class SearchBar extends React.Component{
 		};
 	
 
-	handleSubmit(event){
+	handleSubmit = (event) => {
 		event.preventDefault();
 		this.props.handleSubmit(this.state.value);
-	}
+	};
 
 	render(){
 		const { value, suggestions } = this.state;
