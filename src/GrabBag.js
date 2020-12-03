@@ -64,12 +64,12 @@ class GrabBag extends React.Component {
           : `search/${text}?filter=category&limit=${diff}&offset=${newOffset}`;
       let devices = await iFixitApi.get(searchUrl).then((response) => {
         let results = text === "" ? response.data : response.data.results;
-        return results.map( device => ({
-            display_title: device.display_title,
-            id: device.wikiid,
-            image: device.image.standard,
-            url: device.url,
-	}));
+        return results.map((device) => ({
+          display_title: device.display_title,
+          id: device.wikiid,
+          image: device.image.standard,
+          url: device.url,
+        }));
       });
       // if there was no response from the API
       if (devices.length === 0) {
