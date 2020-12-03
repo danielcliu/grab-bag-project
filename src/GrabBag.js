@@ -41,7 +41,6 @@ class GrabBag extends React.Component {
 
   componentWillUnmount() {
     window.removeEventListener("beforeunload", this.saveGrabBag.bind(this));
-    this.saveGrabBag();
   }
 
   saveGrabBag() {
